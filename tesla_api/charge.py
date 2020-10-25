@@ -1,5 +1,3 @@
-import asyncio
-
 class Charge:
     def __init__(self, vehicle):
         self._vehicle = vehicle

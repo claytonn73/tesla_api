@@ -1,5 +1,5 @@
-import asyncio
 from functools import partialmethod
+
 
 class Climate:
     def __init__(self, vehicle):
@@ -19,7 +19,7 @@ class Climate:
         data = {'driver_temp': driver_temperature,
                 'passenger_temp': passenger_temperature or driver_temperature}
         return await self._vehicle._command('set_temps', data)
-    
+
     async def set_seat_heater(self, temp=0, seat=0):
         # temp = The desired level for the heater. (0-3)
         # The desired seat to heat. (0-5)

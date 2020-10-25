@@ -5,6 +5,7 @@ from .climate import Climate
 from .controls import Controls
 from .exceptions import ApiError, VehicleUnavailableError
 
+
 class Vehicle:
     def __init__(self, api_client, vehicle):
         self._api_client = api_client
@@ -31,7 +32,7 @@ class Vehicle:
         endpoint = 'vehicles/{}/command/{}'.format(self.id, command_endpoint)
         try:
             res = await self._api_client.post(endpoint, data)
-        except VehicleUnavailableError as e:
+        except VehicleUnavailableError:
             # If first attempt, retry with a wake up.
             if _retry:
                 self._vehicle['state'] = 'offline'
@@ -51,7 +52,7 @@ class Vehicle:
 
     async def get_data(self):
         data = await self._api_client.get('vehicles/{}/vehicle_data'.format(self.id))
-        self._update_vehicle({k: v for k,v in data.items() if not isinstance(v, dict)})
+        self._update_vehicle({k: v for k, v in data.items() if not isinstance(v, dict)})
         return data
 
     async def get_state(self):
@@ -104,8 +105,8 @@ class Vehicle:
         password - The account password to reauthenticate.
         """
         return await self._command('remote_start_drive', data={'password': password})
-    
-    async def update(self):      
+
+    async def update(self):
         self._update_vehicle(await self._api_client.get('vehicles/{}'.format(self.id)))
 
     def __dir__(self):

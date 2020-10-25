@@ -11,10 +11,10 @@
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+#
 # The above copyright notice and this permission notice shall be included in all
 # copies or substantial portions of the Software.
-# 
+#
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,7 +24,7 @@
 # SOFTWARE.
 
 from datetime import date, datetime, time
-from typing import Any, Dict, Optional, Union
+from typing import Optional, Union
 
 
 class Energy:
@@ -56,9 +56,8 @@ class Energy:
         info = await self.get_energy_site_info()
         return int(info["battery_count"])
 
-
     async def get_energy_site_calendar_history_data(
-            self, kind = 'energy', period = 'day',
+            self, kind='energy', period='day',
             end_date: Optional[Union[str, date]] = None) -> dict:
         """Return historical energy data.
 
@@ -111,7 +110,6 @@ class Energy:
     async def get_solar_power(self):
         status = await self.get_energy_site_live_status()
         return int(status["solar_power"])
-
 
     # Setting of the backup_reserve_percent used in self_consumption
     # (i.e. self-powered mode).
