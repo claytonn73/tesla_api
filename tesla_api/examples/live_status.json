@@ -1,0 +1,18 @@
+{
+  "response": {
+    "solar_power": 0,
+    "energy_left": 8952.736842105263,
+    "total_pack_energy": 13718,
+    "percentage_charged": 65.26269749311317,
+    "backup_capable": "True",
+    "battery_power": 3000,
+    "load_power": 3000,
+    "grid_status": "Active",
+    "grid_services_active": "False",
+    "grid_power": 0,
+    "grid_services_power": 0,
+    "generator_power": 0,
+    "storm_mode_active": "False",
+    "timestamp": "2020-11-01T16:51:27Z"
+  }
+}

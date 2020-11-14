@@ -1,0 +1,9 @@
+{
+  "period": "week",
+  "timezone": "Europe/London",
+  "time_series": [{
+    "timestamp": "2020-10-26T00:00:00Z",
+    "solar": 9.414350146769664,
+    "battery": 47.33928994950432
+  }]
+}

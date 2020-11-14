@@ -7,13 +7,15 @@ import aiohttp
 from .exceptions import ApiError, AuthenticationError, VehicleUnavailableError
 from .vehicle import Vehicle
 from .energy import Energy
-
-TESLA_API_BASE_URL = 'https://owner-api.teslamotors.com/'
-TOKEN_URL = TESLA_API_BASE_URL + 'oauth/token'
-API_URL = TESLA_API_BASE_URL + 'api/1'
-
-OAUTH_CLIENT_ID = '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384'
-OAUTH_CLIENT_SECRET = 'c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3'
+from .const import (
+    EnergySites,
+    TESLA_API_TOKEN_URL,
+    TESLA_API_URL,
+    OAUTH_CLIENT_ID,
+    OAUTH_CLIENT_SECRET,
+    TESLA_API_URL_PRODUCTS,
+    TESLA_API_URL_VEHICLES,
+)
 
 
 class TeslaApiClient:
@@ -55,7 +57,7 @@ class TeslaApiClient:
         }
         request_data.update(data)
 
-        async with self._session.post(TOKEN_URL, data=request_data) as resp:
+        async with self._session.post(TESLA_API_TOKEN_URL, data=request_data) as resp:
             response_json = await resp.json()
             if resp.status == 401:
                 raise AuthenticationError(response_json)
@@ -68,7 +70,7 @@ class TeslaApiClient:
 
     async def _get_new_token(self):
         return await self._get_token({'grant_type': 'password', 'email': self._email,
-                                      'password': self._password})
+                                      'password': self._password, })
 
     async def _refresh_token(self, refresh_token):
         return await self._get_token({'grant_type': 'refresh_token',
@@ -91,7 +93,7 @@ class TeslaApiClient:
 
     async def get(self, endpoint, params=None):
         await self.authenticate()
-        url = '{}/{}'.format(API_URL, endpoint)
+        url = '{}/{}'.format(TESLA_API_URL, endpoint)
 
         async with self._session.get(url, headers=self._get_headers(), params=params) as resp:
             response_json = await resp.json()
@@ -105,7 +107,7 @@ class TeslaApiClient:
 
     async def post(self, endpoint, data=None):
         await self.authenticate()
-        url = '{}/{}'.format(API_URL, endpoint)
+        url = '{}/{}'.format(TESLA_API_URL, endpoint)
 
         async with self._session.post(url, headers=self._get_headers(), json=data) as resp:
             response_json = await resp.json()
@@ -118,8 +120,8 @@ class TeslaApiClient:
         return response_json['response']
 
     async def list_vehicles(self):
-        return [Vehicle(self, vehicle) for vehicle in await self.get('vehicles')]
+        return [Vehicle(self, vehicle) for vehicle in await self.get(TESLA_API_URL_VEHICLES)]
 
     async def list_energy_sites(self):
-        return [Energy(self, product['energy_site_id']) for
-                product in await self.get('products') if 'energy_site_id' in product]
+        return [Energy(self, product[EnergySites.ENERGY_SITE_ID.value]) for
+                product in await self.get(TESLA_API_URL_PRODUCTS) if EnergySites.ENERGY_SITE_ID.value in product]

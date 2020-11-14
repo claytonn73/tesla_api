@@ -1,0 +1,63 @@
+{
+  "response": {
+    "id": "1144100-03-E--TG1194414410Z0",
+    "site_name": "My Home",
+    "backup_reserve_percent": 0,
+    "default_real_mode": "autonomous",
+    "installation_date": "2020-08-10T17:15:00+01:00",
+    "user_settings": {
+      "storm_mode_enabled": "False",
+      "sync_grid_alert_enabled": "False",
+      "breaker_alert_enabled": "False"
+    },
+    "components": {
+      "solar": "True",
+      "solar_type": "pv_panel",
+      "battery": "True",
+      "grid": "True",
+      "backup": "True",
+      "gateway": "teg",
+      "load_meter": "True",
+      "tou_capable": "True",
+      "storm_mode_capable": "True",
+      "flex_energy_request_capable": "False",
+      "car_charging_data_supported": "False",
+      "off_grid_vehicle_charging_reserve_supported": "False",
+      "vehicle_charging_performance_view_enabled": "False",
+      "vehicle_charging_solar_offset_view_enabled": "False",
+      "battery_solar_offset_view_enabled": "True",
+      "battery_type": "ac_powerwall",
+      "configurable": "True",
+      "grid_services_enabled": "False"
+    },
+    "version": "1.50.1",
+    "battery_count": 1,
+    "tou_settings": {
+      "optimization_strategy": "balanced",
+      "schedule": [{
+        "target": "off_peak",
+        "week_days": [6, 0],
+        "start_seconds": 82800,
+        "end_seconds": 21600
+      }, {
+        "target": "peak",
+        "week_days": [6, 0],
+        "start_seconds": 57600,
+        "end_seconds": 75600
+      }, {
+        "target": "off_peak",
+        "week_days": [1, 2, 3, 4, 5],
+        "start_seconds": 82800,
+        "end_seconds": 21600
+      }, {
+        "target": "peak",
+        "week_days": [1, 2, 3, 4, 5],
+        "start_seconds": 57600,
+        "end_seconds": 75600
+      }]
+    },
+    "nameplate_power": 5000,
+    "nameplate_energy": 13500,
+    "installation_time_zone": "Europe/London"
+  }
+}

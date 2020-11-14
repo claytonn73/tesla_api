@@ -1,0 +1,28 @@
+{
+  "response": [{
+    "energy_site_id": 2444440,
+    "resource_type": "battery",
+    "site_name": "My Home",
+    "id": "STE20444410-00275",
+    "gateway_id": "1152100-03-E--TG1191444410Z0",
+    "asset_site_id": "80a25d8c-794e-4244-9439-5fd44e449440",
+    "energy_left": 9387.473684210529,
+    "total_pack_energy": 13718,
+    "percentage_charged": 68.43179533613157,
+    "battery_type": "ac_powerwall",
+    "backup_capable": "True",
+    "battery_power": 2950,
+    "sync_grid_alert_enabled": "False",
+    "breaker_alert_enabled": "False",
+    "components": {
+      "battery": "True",
+      "battery_type": "ac_powerwall",
+      "solar": "True",
+      "solar_type": "pv_panel",
+      "grid": "True",
+      "load_meter": "True",
+      "market_type": "residential"
+    }
+  }],
+  "count": 1
+}

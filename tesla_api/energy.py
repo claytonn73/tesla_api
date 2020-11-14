@@ -25,6 +25,28 @@
 
 from datetime import date, datetime, time
 from typing import Optional, Union
+from .const import (
+                   PowerwallMode,
+                   HistoryType,
+                   HistoryPeriod,
+                   EnergySites,
+                   LiveStatus,
+                   SiteInfo,
+                   SiteInfoUserSettings,
+                   SiteInfoComponents,
+                   TouSettings,
+                   HistoryData,
+                   SelfConsumptionTimeSeries,
+                   TESLA_API_PERIOD,
+                   TESLA_API_KIND,
+                   TESLA_API_END_DATE,
+                   TESLA_API_URL_ENERGY_SITES,
+                   TESLA_API_URL_SITE_INFO,
+                   TESLA_API_URL_LIVE_STATUS,
+                   TESLA_API_URL_CALENDAR_HISTORY,
+                   TESLA_API_URL_OPERATION,
+                   TESLA_API_URL_BACKUP,
+)
 
 
 class Energy:
@@ -37,27 +59,45 @@ class Energy:
         return self._energy_site_id
 
     async def get_energy_site_info(self):
-        return await self._api_client.get('energy_sites/{}/site_info'.format(self._energy_site_id))
+        return await self._api_client.get('{}/{}/{}'.format(
+            TESLA_API_URL_ENERGY_SITES,
+            self._energy_site_id,
+            TESLA_API_URL_SITE_INFO))
+
+    async def print_energy_site_info(self):
+        info = await self.get_energy_site_info()
+        for data in SiteInfo:
+            if data.name == SiteInfo.USER_SETTINGS.name:
+                for settings in SiteInfoUserSettings:
+                    print(settings.value, info[data.value][settings.value])
+            elif data.name == SiteInfo.COMPONENTS.name:
+                for components in SiteInfoComponents:
+                    print(components.value, info[data.value][components.value])
+            elif data.name == SiteInfo.TOU_SETTINGS.name:
+                for settings in TouSettings:
+                    print(settings.value, info[data.value][settings.value])
+            else:
+                print(data.value, info[data.value])
 
     # Helper functions for get_energy_site_info
     async def get_backup_reserve_percent(self):
         info = await self.get_energy_site_info()
-        return int(info["backup_reserve_percent"])
+        return int(info[EnergySites.BACKUP_RESERVE_PERCENT.value])
 
     async def get_operating_mode(self):
         info = await self.get_energy_site_info()
-        return info["default_real_mode"]
+        return info[EnergySites.DEFAULT_REAL_MODE.value]
 
     async def get_version(self):
         info = await self.get_energy_site_info()
-        return info["version"]
+        return info[EnergySites.VERSION.value]
 
     async def get_battery_count(self):
         info = await self.get_energy_site_info()
-        return int(info["battery_count"])
+        return int(info[EnergySites.BATTERY_COUNT.value])
 
     async def get_energy_site_calendar_history_data(
-            self, kind='energy', period='day',
+            self, kind=HistoryType.ENERGY.value, period=HistoryPeriod.DAY.value,
             end_date: Optional[Union[str, date]] = None) -> dict:
         """Return historical energy data.
 
@@ -72,7 +112,7 @@ class Energy:
                 with datetime(year=2020, month=5, day=1), this gets all data for May 1st.
                 Defaults to the current time.
         """
-        params = {'kind': kind, 'period': period}
+        params = {TESLA_API_KIND: kind, TESLA_API_PERIOD: period}
 
         if isinstance(end_date, date):
             if not isinstance(end_date, datetime):
@@ -86,59 +126,93 @@ class Energy:
             end_date = end_date.isoformat()
 
         if end_date is not None:
-            params['end_date'] = end_date
+            params[TESLA_API_END_DATE] = end_date
 
-        return await self._api_client.get(
-            'energy_sites/{}/calendar_history'.format(self._energy_site_id), params=params)
+        return await self._api_client.get('{}/{}/{}'.format(
+            TESLA_API_URL_ENERGY_SITES,
+            self._energy_site_id,
+            TESLA_API_URL_CALENDAR_HISTORY),
+            params=params)
 
+    # Helper functions for get_energy_site_calendar_history_data
+    async def get_energy_site_power_history(self):
+        history = await self.get_energy_site_calendar_history_data(kind=HistoryType.POWER.value)
+        return history
+
+    async def get_energy_site_energy_history(self, period=HistoryPeriod.DAY.value):
+        history = await self.get_energy_site_calendar_history_data(kind=HistoryType.ENERGY.value, period=period)
+        return history
+
+    async def get_energy_site_self_consumption_history(self, period=HistoryPeriod.DAY.value):
+        history = await self.get_energy_site_calendar_history_data(kind=HistoryType.SELF_CONSUMPTION.value,
+                                                                   period=period)
+        timestamp = history[HistoryData.TIME_SERIES.value][0][SelfConsumptionTimeSeries.TIMESTAMP.value]
+        solar_percent = int(history[HistoryData.TIME_SERIES.value][0][SelfConsumptionTimeSeries.SOLAR_PERCENT.value])
+        battery_percent = int(history[HistoryData.TIME_SERIES.value][0][SelfConsumptionTimeSeries.BATTERY_PERCENT.value])
+        return timestamp, solar_percent, battery_percent
+
+    # Live Status Information
     async def get_energy_site_live_status(self):
-        return await self._api_client.get('energy_sites/{}/live_status'.format(self._energy_site_id))
+        return await self._api_client.get('{}/{}/{}'.format(
+            TESLA_API_URL_ENERGY_SITES,
+            self._energy_site_id,
+            TESLA_API_URL_LIVE_STATUS))
+
+    async def print_energy_site_live_status(self):
+        info = await self.get_energy_site_live_status()
+        for data in LiveStatus:
+            if data.name == LiveStatus.ENERGY_LEFT.name:
+                print(data.value, int(info[data.value]))
+            elif data.name == LiveStatus.PERCENTAGE_CHARGED.name:
+                print(data.value, int(info[data.value]))
+            else:
+                print(data.value, info[data.value])
 
     # Helper functions for get_energy_site_live_status
     async def get_energy_site_live_status_percentage_charged(self):
         status = await self.get_energy_site_live_status()
-        return int(status["percentage_charged"])
+        return int(status[LiveStatus.PERCENTAGE_CHARGED.value])
 
     async def get_energy_site_live_status_energy_left(self):
         status = await self.get_energy_site_live_status()
-        return float(status["energy_left"])
+        return int(status[LiveStatus.ENERGY_LEFT.value])
 
     async def get_energy_site_live_status_total_pack_energy(self):
         status = await self.get_energy_site_live_status()
-        return int(status["total_pack_energy"])
+        return int(status[LiveStatus.TOTAL_PACK_ENERGY.value])
 
     async def get_solar_power(self):
         status = await self.get_energy_site_live_status()
-        return int(status["solar_power"])
+        return int(status[LiveStatus.SOLAR_POWER.value])
 
-    # Setting of the backup_reserve_percent used in self_consumption
-    # (i.e. self-powered mode).
-    # On my Powerwall 2, setting backup_reserve_percent > energy_left
-    # causes the battery to charge at 1.7kW
+    # Setting of the backup_reserve_percent
     async def set_backup_reserve_percent(self, backup_reserve_percent):
         assert 0 <= backup_reserve_percent <= 100
         return await self._api_client.post(
-            endpoint='energy_sites/{}/backup'.format(self._energy_site_id),
-            data={"backup_reserve_percent": backup_reserve_percent}
+            endpoint='{}/{}/{}'.format(
+                TESLA_API_URL_ENERGY_SITES,
+                self._energy_site_id,
+                TESLA_API_URL_BACKUP),
+            data={EnergySites.BACKUP_RESERVE_PERCENT.value: backup_reserve_percent}
         )
 
-    # Correspondence between mode names and the Tesla app:
-    #   mode = 'self_consumption' = "self-powered" on app
-    #   mode = 'backup' = "backup-only" on app
-    #   mode = 'autonomous' = "Advanced - Time-based control" on app
-    # Note: setting 'backup' mode causes my Powerwall 2 to charge at 3.4kW
+    # Setting the operating mode of the Powerwall
+    # Mode uses the PowerwallMode Enum
     async def set_operating_mode(self, mode):
         return await self._api_client.post(
-            endpoint='energy_sites/{}/operation'.format(self._energy_site_id),
-            data={"default_real_mode": mode}
+            endpoint='{}/{}/{}'.format(
+                TESLA_API_URL_ENERGY_SITES,
+                self._energy_site_id,
+                TESLA_API_URL_OPERATION),
+            data={EnergySites.DEFAULT_REAL_MODE.value: mode.value}
         )
 
     # helper functions for set_operating_mode
     async def set_operating_mode_self_consumption(self):
-        return await self.set_operating_mode('self_consumption')
+        return await self.set_operating_mode(PowerwallMode.SELF_CONSUMPTION)
 
     async def set_operating_mode_backup(self):
-        return await self.set_operating_mode('backup')
+        return await self.set_operating_mode(PowerwallMode.BACKUP)
 
     async def set_operating_mode_autonomous(self):
-        return await self.set_operating_mode('autonomous')
+        return await self.set_operating_mode(PowerwallMode.AUTONOMOUS)

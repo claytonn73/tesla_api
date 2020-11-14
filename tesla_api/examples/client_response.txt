@@ -1,0 +1,18 @@
+<ClientResponse(https://owner-api.teslamotors.com/api/1/energy_sites/2444440/site_info) [200 OK]>
+<CIMultiDictProxy(
+  'Date': 'Sun, 01 Nov 2020 16:51:26 GMT',
+  'Content-Type': 'application/json; charset=utf-8',
+  'Transfer-Encoding': 'chunked',
+  'Connection': 'keep-alive',
+  'Vary': 'Accept-Encoding',
+  'X-Frame-Options': 'SAMEORIGIN',
+  'X-XSS-Protection': '1; mode=block',
+  'X-Content-Type-Options': 'nosniff',
+  'X-TXID': 'ffdf46c8344eb18a01c441b5444ad44ac25',
+  'Etag': 'W/"d6afd5d61d44b744e5b4499b147efcb9"',
+  'Cache-Control': 'max-age=0, private, must-revalidate',
+  'X-Request-Id': 'f082cb4a48c584418ec8c719c4493b22f082cb4444c584914448c719c8b93b22',
+  'X-Runtime': '0.938980',
+  'Strict-Transport-Security': 'max-age=15724800; includeSubDomains',
+  'Content-Encoding': 'gzip'
+  )>
