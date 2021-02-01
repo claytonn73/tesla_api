@@ -4,6 +4,9 @@
 # modes to charge the battery at cheap rate electricity times
 ##############################################################################
 
+import json
+import requests
+import time
 import asyncio
 import sys
 import argparse
@@ -20,9 +23,8 @@ class PowerwallReserved(Enum):
 
 
 def getopts(argv):
-    parser = argparse.ArgumentParser(description='Set Powerwall operating mode')
-    parser.add_argument('-e', '--email', required=True, help='Powerwall customer email')
-    parser.add_argument('-p', '--password', required=True, help='Powerwall customer password')
+    parser = argparse.ArgumentParser(
+        description='Set Powerwall operating mode')
     parser.add_argument('-m', '--mode', required=True, type=PowerwallMode,
                         choices=PowerwallMode, help='Desired operating mode for powerwall')
     args = parser.parse_args()
@@ -30,15 +32,27 @@ def getopts(argv):
     return args
 
 
-async def main(email, password, desiredmode):
+async def save_token(token):
+    with open("/data/homeassistant/.homeassistant/tokens.json", 'w') as file:
+        file.write(token)
 
-    client = TeslaApiClient(email, password)
+
+def get_token(file):
     try:
-        await client.authenticate()
-    except:
-        print("Authentication failed")
-        await client.close()
+        token = open("/data/homeassistant/.homeassistant/" + file).read()
+        return token
+    except OSError:
+        print("Unable to read token file")
         sys.exit(2)
+
+
+async def main(desiredmode):
+
+    accesstokens = get_token("tokens.json")
+
+    client = TeslaApiClient(token=accesstokens, on_new_token=save_token)
+
+    await client.authenticate()
 
     # Get the current operating mode
     energy_sites = await client.list_energy_sites()
@@ -55,7 +69,6 @@ async def main(email, password, desiredmode):
 
     await client.close()
 
-
 args = getopts(sys.argv[1:])
 
-asyncio.run(main(args.email, args.password, args.mode))
+asyncio.run(main(args.mode))

@@ -1,7 +1,6 @@
 import asyncio
 import json
-from datetime import datetime, timedelta
-
+import time
 import aiohttp
 
 from .exceptions import ApiError, AuthenticationError, VehicleUnavailableError
@@ -15,6 +14,7 @@ from .const import (
     OAUTH_CLIENT_SECRET,
     TESLA_API_URL_PRODUCTS,
     TESLA_API_URL_VEHICLES,
+    TESLA_API_OAUTH2_URL,
 )
 
 
@@ -23,7 +23,7 @@ class TeslaApiClient:
     callback_wake_up = None  # Called when attempting to wake a vehicle.
     timeout = 30  # Default timeout for operations such as Vehicle.wake_up().
 
-    def __init__(self, email=None, password=None, token=None, on_new_token=None):
+    def __init__(self, token=None, on_new_token=None):
         """Creates client from provided credentials.
 
         If token is not provided, or is no longer valid, then a new token will
@@ -34,9 +34,7 @@ class TeslaApiClient:
         automatic token renewal. The token is returned as a string and can be passed
         directly into this constructor.
         """
-        assert token is not None or (email is not None and password is not None)
-        self._email = email
-        self._password = password
+        assert token is not None
         self._token = json.loads(token) if token else None
         self._new_token_callback = on_new_token
         self._session = aiohttp.ClientSession()
@@ -50,46 +48,69 @@ class TeslaApiClient:
     async def close(self):
         await self._session.close()
 
-    async def _get_token(self, data):
-        request_data = {
-            'client_id': OAUTH_CLIENT_ID,
-            'client_secret': OAUTH_CLIENT_SECRET
-        }
-        request_data.update(data)
-
-        async with self._session.post(TESLA_API_TOKEN_URL, data=request_data) as resp:
-            response_json = await resp.json()
-            if resp.status == 401:
-                raise AuthenticationError(response_json)
-
-        # Send token to application via callback.
-        if self._new_token_callback:
-            asyncio.create_task(self._new_token_callback(json.dumps(response_json)))
-
-        return response_json
-
-    async def _get_new_token(self):
-        return await self._get_token({'grant_type': 'password', 'email': self._email,
-                                      'password': self._password, })
-
-    async def _refresh_token(self, refresh_token):
-        return await self._get_token({'grant_type': 'refresh_token',
-                                      'refresh_token': refresh_token})
-
-    async def authenticate(self):
-        if not self._token:
-            self._token = await self._get_new_token()
-
-        expiry_time = timedelta(seconds=self._token['expires_in'])
-        expiration_date = datetime.fromtimestamp(self._token['created_at']) + expiry_time
-
-        if datetime.utcnow() >= expiration_date:
-            self._token = await self._refresh_token(self._token['refresh_token'])
-
     def _get_headers(self):
         return {
-            'Authorization': 'Bearer {}'.format(self._token['access_token'])
+            'Authorization': 'Bearer {}'.format(self._token["authentication_token"]['access_token'])
         }
+
+    def check_token_expiration(self):
+
+        # Check whether current token is close to expiration with less than 1 hour remaining
+        expiration_time = self._token["authentication_token"]['created_at'] +\
+                          self._token["authentication_token"]['expires_in'] -\
+                          int(time.time())
+        if expiration_time > 3600:
+            return False
+        else:
+            return True
+
+    async def get_access_token(self, refresh_token):
+        # Obtain new shortlived oauth access token using stored refresh token
+        headers = {"Requested-With": "com.teslamotors.tesla"}
+        payload = {
+            "grant_type": "refresh_token",
+            "client_id": "ownerapi",
+            "client_secret": OAUTH_CLIENT_SECRET,
+            "refresh_token": refresh_token,
+            "scope": "openid email offline_access",
+        }
+        async with self._session.post(url=TESLA_API_OAUTH2_URL, headers=headers, json=payload) as response:
+            response_json = await response.json()
+            if response.status == 200:
+                return response_json["access_token"]
+
+    async def get_authentication_token(self, access_token):
+        # Use shortlived access token to obtain the long lived access token
+        headers = {"authorization": "bearer " + access_token}
+        payload = {
+            "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
+            "client_id": OAUTH_CLIENT_ID,
+            "client_secret": OAUTH_CLIENT_SECRET,
+        }
+        async with self._session.post(url=TESLA_API_TOKEN_URL, headers=headers, json=payload) as response:
+            response_json = await response.json()
+            if response.status == 200:
+                return response_json
+
+    async def refresh_token(self):
+        # Get tokens from the token file which contains both oauth and authentication tokens
+        if self.check_token_expiration() is True:
+
+            access_token = await self.get_access_token(self._token["oauth_token"]["refresh_token"])
+
+            if access_token is not None:
+                new_token = await self.get_authentication_token(access_token)
+
+            if new_token is not None:
+                self._token["authentication_token"] = new_token
+
+    async def authenticate(self):
+        if self.check_token_expiration() is True:
+            await self.refresh_token()
+            # Send token to application via callback.
+            if self._new_token_callback:
+                asyncio.create_task(self._new_token_callback(json.dumps(self._token)))
+        return True
 
     async def get(self, endpoint, params=None):
         await self.authenticate()

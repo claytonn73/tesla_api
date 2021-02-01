@@ -1,6 +1,10 @@
 from enum import Enum
 
 TESLA_API_BASE_URL = 'https://owner-api.teslamotors.com/'
+TESLA_API_AUTH_URL = 'https://auth.tesla.com/'
+TESLA_API_OAUTH2_URL = TESLA_API_AUTH_URL + 'oauth2/v3/token'
+TESLA_API_OAUTH2_AUTH_URL = TESLA_API_AUTH_URL + 'oauth2/v3/authorize'
+TESLA_API_REDIRECT_URL = TESLA_API_AUTH_URL + 'void/callback'
 TESLA_API_TOKEN_URL = TESLA_API_BASE_URL + 'oauth/token'
 TESLA_API_URL = TESLA_API_BASE_URL + 'api/1'
 TESLA_API_URL_VEHICLES = 'vehicles'
@@ -14,6 +18,10 @@ TESLA_API_URL_BACKUP = 'backup'
 
 OAUTH_CLIENT_ID = '81527cff06843c8634fdc09e8ac0abefb46ac849f38fe1e431c2ef2106796384'
 OAUTH_CLIENT_SECRET = 'c7257eb71a564034f9419ee651c7d0e5f7aa6bfbd18bafb5c5c033b093bb2fa3'
+OAUTH_OWNERAPI = 'ownerapi'
+OAUTH_SCOPE = 'openid email offline_access'
+OAUTH_TOKEN_FILE = 'oauth_token_file.json'
+TOKEN_FILE = 'token_file.json'
 
 TESLA_API_PERIOD = 'period'
 TESLA_API_KIND = 'kind'
